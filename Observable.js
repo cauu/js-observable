@@ -1,6 +1,34 @@
 const _ = require('lodash');
 
-function observe(value, vm) {
+const Dep = require('./Dep');
+
+function observe(value, dep) {
+  if(_.isObject(value)) {
+    return new Observable(value, dep).value;
+  }
+
+  return value;
+}
+
+function defReactive(obj, index, val, dep) {
+  Object.defineProperty(obj, index, {
+    enumerable: true,
+    configurable: true,
+    get: () => {
+      return val;
+    },
+    set: (newVal) => {
+      if(newVal === val) {
+        return;
+      }
+
+      val = observe(newVal, dep);
+
+      dep && dep.notify();
+      // 最后需要考虑，此处如何通知到watchers?
+      console.log('notify ' + JSON.stringify(newVal));
+    }
+  });
 }
 
 /**
@@ -10,33 +38,34 @@ function observe(value, vm) {
  * 会自动通知所有的订阅者
  */
 class Observable {
-  constructor(value) {
+  constructor(value, dep) {
     this.value = value;
-    
+    this.dep = dep;
+
     this.walk(this.value);
   }
 
+  addDep(dep) {
+    this.dep = dep;
+  }
+
   walk(obj) {
+    const dep = this.dep;
+
     Object.keys(obj).forEach((k) => {
       let val = obj[k];
-      // observe k
-      Object.defineProperty(obj, k, {
-        enumerable: true,
-        configurable: true,
-        get: () => val,
-        set: (newVal) => {
-          console.log('notify: ', this.value);
-          if(newVal === val) {
-            return;
-          }
 
-          val = newVal;          
-          // notify all watchers
-          console.log('notify: ', this.value);
-        }
-      })
+      // 如果赋值对象是object或array，那么递归
+      if(_.isArray(val) || _.isObject(val)) {
+        this.walk(obj[k]);
+      }
+
+      defReactive(obj, k, val, dep);
     });
   }
 }
 
-module.exports = Observable;
+module.exports = {
+  Observable,
+  observe
+};
