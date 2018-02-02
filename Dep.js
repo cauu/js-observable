@@ -8,6 +8,7 @@ class Dep {
   }
 
   notify() {
+    console.log('notified');
     this.subs.forEach(function(sub) {
       sub.update();
     });
