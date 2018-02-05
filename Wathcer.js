@@ -1,18 +1,21 @@
+const Dep = require('./Dep');
 /**
  * @description
  * watcher需要监听dep
  */
 class Watcher {
-  constructor(cb) {
-    this.cb = cb;
+  constructor(target) {
+    this.target = target;
+
+    this.dep = new Dep();
+
+    this.target.addDep(this.dep);
   }
 
-  addDept(dep) {
-    dep.addSub(this);
-  }
-
-  update() {
-    console.log('update');
+  register(cb) {
+    cb && this.dep.addSub({
+      update: () => cb(this.target)
+    });
   }
 }
 

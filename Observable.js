@@ -4,7 +4,9 @@ const Dep = require('./Dep');
 
 function observe(value, dep) {
   if(_.isObject(value)) {
-    return new Observable(value, dep).value;
+    const obVal = new Observable(value, dep);
+
+    return new Observable(value).value;
   }
 
   return value;
@@ -26,7 +28,7 @@ function defReactive(obj, index, val, dep) {
 
       dep && dep.notify();
       // 最后需要考虑，此处如何通知到watchers?
-      console.log('notify ' + JSON.stringify(newVal));
+      // console.log('notify ' + JSON.stringify(newVal));
     }
   });
 }
@@ -40,13 +42,18 @@ function defReactive(obj, index, val, dep) {
 class Observable {
   constructor(value, dep) {
     this.value = value;
-    this.dep = dep;
 
-    this.walk(this.value);
+    if(!!dep) {
+      this.dep = dep;
+
+      this.walk(this.value);
+    }
   }
 
   addDep(dep) {
     this.dep = dep;
+
+    this.walk(this.value);
   }
 
   walk(obj) {
